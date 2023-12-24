@@ -11,7 +11,7 @@ export const executeExternalQuery = async (source: string, query: string): Promi
   }
 };
 
-export const interpreter = async (query: OverpassBypassQueryParsed): Promise<string> => {
+export const interpreter = async (query: OverpassBypassQueryParsed): Promise<unknown[]> => {
   // call overpass api by query.byPassedOverpassQuery
   const overpassQuery = query.bypassedOverpassQuery;
   const overpassResponse = await fetch('https://overpass-api.de/api/interpreter', {
@@ -22,17 +22,18 @@ export const interpreter = async (query: OverpassBypassQueryParsed): Promise<str
     throw new Error('overpass api call failed');
   }
   const overpassResponseJson = await overpassResponse.json();
+  const elements = [];
   // for overpassResponseJson.elements
   for (const element of overpassResponseJson.elements) {
     // did element has tag?
     if (!element.tags) {
+      elements.push(element);
       continue;
     }
     // for keys of element.tags
     for (const key of Object.keys(element.tags)) {
       // is element.tags[key] has external query?
       if (element.tags[key].includes('external')) {
-        //console.log(element.tags[key]);
         // detect source
         // source is like 'sqlite://tests/db/fuga.sqlite3'
         // extract from external "sqlite://tests/db/fuga.sqlite3" { ...
@@ -47,8 +48,9 @@ export const interpreter = async (query: OverpassBypassQueryParsed): Promise<str
       }
     }
     console.log(element.tags);
+    elements.push(element);
   }
 
-  return '';
+  return elements;
 };
 
